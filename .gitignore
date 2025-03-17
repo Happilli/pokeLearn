@@ -55,5 +55,4 @@ global.json
 .idea/
 .env
 
-appsettings.Development.json
 appsettings.json
