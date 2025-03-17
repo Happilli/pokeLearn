@@ -1,0 +1,59 @@
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Dd]ist/
+[Dd]ev/
+[Dd]ebug-*
+[Dd]ist-*
+[Dd]ev-*
+bin/
+obj/
+
+# User-specific files
+.idea/
+.vscode/
+.vs/
+# Windows Installer files
+*.cab
+*.msi
+*.msm
+*.msp
+
+# Windows Installer files
+*.cab
+*.msi
+*.msm
+*.msp
+
+# Windows Installer files
+*.cab
+*.msi
+*.msm
+*.msp
+
+# User-specific files
+.vscode/
+.idea/
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+
+# .NET 6 SDK files
+# .NET 6 sdk's release cycle no longer supports lock files
+# Remove when upgrading to newer SDKs
+*.nupkg
+
+# .NET Core specific files
+global.json
+
+# User-specific files
+.vscode/
+.idea/
+.env
+
+appsettings.Development.json
+appsettings.json
