@@ -14,4 +14,5 @@ To learn about pokemon  and various other stuff!
 
 
 1. add proper documentation for running locally in machine, or docker build run documentation as well!
+2. docker build live on: [render-docker-intrigation](https://pokelearn-qcab.onrender.com)
  
