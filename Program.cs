@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
 using DotNetEnv;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 //loadin .env [using .env instead of appseeting.json for security and other stuff]
@@ -24,8 +25,24 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero
+            ClockSkew = TimeSpan.Zero,
+            ValidateAudience = false,
+            ValidateIssuer= false
         };
+
+         options.Events = new JwtBearerEvents()
+    {
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine($"Authentication failed: {context.Exception}");
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            Console.WriteLine("Token validated successfully");
+            return Task.CompletedTask;
+        }
+    };
     });
 
 builder.Services.AddSingleton<IMongoClient>(serviceProvider =>
@@ -37,9 +54,26 @@ builder.Services.AddSingleton<IMongoClient>(serviceProvider =>
 //adding modular files needed
 builder.Services.AddSingleton<MongoDbService>();
 builder.Services.AddControllers();
+builder.Services.AddHttpClient();
 var app = builder.Build();
-app.UseAuthentication();
+
 app.UseRouting();
+app.Use(async (context, next) =>
+{
+    await next();
+
+    if (context.Response.StatusCode == 401)
+    {
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsync(JsonSerializer.Serialize(new
+        {
+            StatusCode = 401,
+            Message = "Unauthorized - Invalid or missing JWT token"
+        }));
+    }
+});
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 
 
