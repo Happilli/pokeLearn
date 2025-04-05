@@ -20,18 +20,21 @@ public class AuthController : ControllerBase
     }
 //registration
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] User user)
-    {
-        var usersCollection = _mongoDbService.GetUsersCollection();
+public async Task<IActionResult> Register([FromBody] User user)
+{
+    var usersCollection = _mongoDbService.GetUsersCollection();
 
-        if (usersCollection.AsQueryable().Any(u => u.Username == user.Username))
-            return BadRequest("Username already exists");
+    if (usersCollection.AsQueryable().Any(u => u.Username == user.Username))
+        return BadRequest("Username already exists");
 
-        user.UserPass = HashPassword(user.UserPass);
+    if (string.IsNullOrWhiteSpace(user.FavAnime))
+        return BadRequest("Favorite anime is required for password recovery");
 
-        await usersCollection.InsertOneAsync(user);
-        return Ok("User registered successfully");
-    }
+    user.UserPass = HashPassword(user.UserPass);
+
+    await usersCollection.InsertOneAsync(user);
+    return Ok("User registered successfully");
+}
 //user login
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] User user)
@@ -60,7 +63,7 @@ public class AuthController : ControllerBase
     {
         return HashPassword(inputPassword) == storedHash;
     }
-//generaitng jwt token after logging for secure accessing
+//generating jwt token after logging for secure accessing
     private string GenerateJwtToken(User user)
     {
         var claims = new[] 
@@ -86,4 +89,43 @@ public class AuthController : ControllerBase
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+
+//handling forgertpassword
+public class ForgotPasswordRequest
+{
+    public string Username { get; set; } = string.Empty;
+    public string FavAnime { get; set; } = string.Empty;
+    public string NewPassword { get; set; } = string.Empty;
+    public string ConfirmNewPassword { get; set; } = string.Empty;
 }
+
+[HttpPost("fpachange")]
+public async Task<IActionResult> ForgotPasswordChange([FromBody] ForgotPasswordRequest request)
+{
+    var usersCollection = _mongoDbService.GetUsersCollection();
+    var existingUser = await usersCollection.Find(u => u.Username == request.Username).FirstOrDefaultAsync();
+
+    if (existingUser == null)
+        return BadRequest("User not found");
+
+    if (!string.Equals(existingUser.FavAnime, request.FavAnime, StringComparison.OrdinalIgnoreCase))
+        return BadRequest("Incorrect favorite anime");
+
+    if (request.NewPassword != request.ConfirmNewPassword)
+        return BadRequest("New passwords do not match");
+
+    // updating password here
+    var update = Builders<User>.Update
+        .Set(u => u.UserPass, HashPassword(request.NewPassword));
+
+    await usersCollection.UpdateOneAsync(
+        u => u.Username == request.Username,
+        update);
+
+    return Ok("Password changed successfully");
+}
+
+
+}
+
+
